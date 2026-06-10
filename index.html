@@ -32,10 +32,16 @@
     }
     #endpoint {
       width: 100%; box-sizing: border-box;
-      padding: 10px 12px; margin-bottom: 28px;
+      padding: 10px 12px; margin-bottom: 20px;
       border: 1px solid #d8d8de; border-radius: 10px;
       font: 14px ui-monospace, SFMono-Regular, Menlo, monospace;
       color: var(--charcoal); background: #fff;
+    }
+    #language {
+      width: 100%; box-sizing: border-box;
+      padding: 10px 12px; margin-bottom: 28px;
+      border: 1px solid #d8d8de; border-radius: 10px;
+      font: 15px/1.4 inherit; color: var(--charcoal); background: #fff;
     }
     #mic-slot { margin-bottom: 4px; }
     #status { min-height: 22px; font-size: 14px; color: #6e6e73; margin-bottom: 16px; }
@@ -66,6 +72,14 @@
     <label for="endpoint">reed-backend endpoint</label>
     <input id="endpoint" value="http://localhost:8080/api/transcribe" spellcheck="false" />
 
+    <label for="language">Language</label>
+    <select id="language">
+      <option value="">Auto</option>
+      <option value="en">English</option>
+      <option value="hy">Հայերեն</option>
+      <option value="ru">Русский</option>
+    </select>
+
     <div id="mic-slot"></div>
     <div id="status">Hold to talk</div>
 
@@ -78,18 +92,32 @@
 
     const slot = document.getElementById("mic-slot");
     const endpointInput = document.getElementById("endpoint");
+    const languageSelect = document.getElementById("language");
     const status = document.getElementById("status");
     const transcript = document.getElementById("transcript");
 
+    languageSelect.value = localStorage.getItem("reed.language") ?? "";
+
     // <reed-mic> reads its endpoint once when attached, so swap in a fresh
-    // element whenever the endpoint changes.
+    // element whenever the endpoint changes. The language attribute, by
+    // contrast, is re-read every take — no re-mount needed.
     function mountMic() {
       slot.replaceChildren();
       const mic = document.createElement("reed-mic");
       mic.setAttribute("endpoint", endpointInput.value.trim());
+      syncLanguage(mic);
       slot.append(mic);
     }
+    function syncLanguage(mic = slot.querySelector("reed-mic")) {
+      if (!mic) return;
+      if (languageSelect.value) mic.setAttribute("language", languageSelect.value);
+      else mic.removeAttribute("language");
+    }
     endpointInput.addEventListener("change", mountMic);
+    languageSelect.addEventListener("change", () => {
+      localStorage.setItem("reed.language", languageSelect.value);
+      syncLanguage();
+    });
     mountMic();
 
     slot.addEventListener("reed:result", (event) => {
