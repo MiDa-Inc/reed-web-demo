@@ -37,17 +37,25 @@
       font: 14px ui-monospace, SFMono-Regular, Menlo, monospace;
       color: var(--charcoal); background: #fff;
     }
-    #mic-slot { margin-bottom: 12px; }
-    #status { min-height: 22px; font-size: 14px; color: #6e6e73; margin-bottom: 24px; }
+    #mic-slot { margin-bottom: 4px; }
+    #status { min-height: 22px; font-size: 14px; color: #6e6e73; margin-bottom: 16px; }
     #status.error { color: #b3261e; }
     #transcript {
-      text-align: left; background: #fff; border-radius: 14px;
-      padding: 18px 20px; min-height: 72px;
+      display: block; width: 100%; box-sizing: border-box; resize: vertical;
+      text-align: left; background: #fff; border: none; border-radius: 14px;
+      padding: 18px 20px; min-height: 120px;
+      font: inherit; color: inherit;
       box-shadow: 0 6px 14px rgba(0, 0, 0, .06);
     }
-    #transcript .empty { color: #aeaeb4; }
-    #transcript p { margin: 0 0 10px; }
-    #transcript p:last-child { margin-bottom: 0; }
+    #transcript::placeholder { color: #aeaeb4; }
+    #transcript:focus { outline: 2px solid #d8d8de; }
+    #clear {
+      margin-top: 12px; padding: 8px 22px;
+      border: none; border-radius: 999px; cursor: pointer;
+      background: var(--tonal); color: var(--charcoal);
+      font: 600 14px/1.4 inherit;
+    }
+    #clear:hover { background: #dcdce2; }
   </style>
 </head>
 <body>
@@ -61,7 +69,8 @@
     <div id="mic-slot"></div>
     <div id="status">Hold to talk</div>
 
-    <div id="transcript"><span class="empty">Transcripts appear here.</span></div>
+    <textarea id="transcript" placeholder="Transcripts appear here — edit freely." spellcheck="true"></textarea>
+    <button id="clear" type="button">Clear</button>
   </main>
 
   <script type="module">
@@ -86,10 +95,14 @@
     slot.addEventListener("reed:result", (event) => {
       status.className = "";
       status.textContent = "Hold to talk";
-      if (transcript.querySelector(".empty")) transcript.replaceChildren();
-      const line = document.createElement("p");
-      line.textContent = event.detail.text;
-      transcript.append(line);
+      const text = event.detail.text;
+      transcript.value = transcript.value ? `${transcript.value}\n${text}` : text;
+      transcript.scrollTop = transcript.scrollHeight;
+    });
+
+    document.getElementById("clear").addEventListener("click", () => {
+      transcript.value = "";
+      transcript.focus();
     });
 
     slot.addEventListener("reed:error", (event) => {
